@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>JoTIt</title>
+        <style>
+            .container {
+                margin: 15px auto;
+                border: 1px solid;
+                border-radius: 5px;
+                border-color: var(--vscode-editor-foreground);
+                width: 95%;
+            }
+            #notes {
+                background-color: var(--vscode-editor-background);
+                width: 95%;
+                margin: auto;
+                height: 250px;
+                color: rgb(211, 206, 206);
+                font-size: 1rem;
+            }
+            form {
+                display: flex;
+                flex-flow: column;
+            }
+            label {
+                font-size: 1.4rem;
+                padding: 10px;
+            }
+            #keyword {
+                width: 95%;
+                margin: auto;
+                background-color: var(--vscode-editor-background);
+                color: var(--vscode-editor-foreground);
+            }
+            input {
+                font-size: 1.2rem;
+            }
+            #imageUri {
+                width: 95%;
+                margin: auto;
+                background-color: var(--vscode-editor-background);
+                color: var(--vscode-editor-foreground);
+            }
+            #add-btn {
+                background-color: var(--vscode-button-background);
+                border: none;
+                margin: 20px 10px;
+                width: 100px;
+                padding: 10px;
+                color: var(--vscode-editor-foreground);
+            }
+            #error {
+                background: rgb(236, 4, 4);
+                color: white;
+                margin: 12px auto;
+                font-size: 1rem;
+                height: 25px;
+                width: 95%;
+                padding: 8px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div id="error" style="display: none">Keyword Cannot Be Null</div>
+            <form>
+                <label for="keyword">Keyword</label>
+                <input name="keyword" id="keyword" type="text" />
+                <label for="imageUri">Image URL</label>
+                <input name="imageUri" id="imageUri" type="text" />
+                <label for="notes">Notes To Save</label>
+                <textarea
+                    id="notes"
+                    name="notes"
+                    row="40"
+                    cols="100"
+                ></textarea>
+                <button onclick="addNote()" id="add-btn">Add Note</button>
+            </form>
+        </div>
+        <script>
+            function addNote() {
+                let keyword = document.getElementById('keyword').value;
+                keyword = keyword.trim();
+                if (keyword === '') {
+                    document.getElementById('error').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('error').style.display = 'none';
+                    }, 2000);
+                    return;
+                }
+                const imageUri = document.getElementById('imageUri').value;
+                let text = document.getElementById('notes').value;
+                let message = {
+                    keyword,
+                    imageUri,
+                    text,
+                };
+                const vscode = acquireVsCodeApi();
+                vscode.postMessage({ type: 'form', message: message });
+            }
+        </script>
+    </body>
+</html>
