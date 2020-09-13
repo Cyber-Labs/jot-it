@@ -1,12 +1,11 @@
 const vscode = require('vscode');
-const fs = require('fs').promises;
 const {
-    loadKeywords,
-    addKeyword,
     validateImage,
     addNote,
+    loadTitles,
+    loadAllTags,
 } = require('./FileUtils');
-const { getWebViewContent } = require('./webview/render');
+const { getWebViewContent, renderSearch } = require('./webview/render');
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -15,24 +14,40 @@ function activate(context) {
     // The command has been defined in the package.json file
     // The implementation of the command with  registerCommand
     // The commandId parameter matches the command field in package.json
-    let search = vscode.commands.registerCommand('jotit.search', function () {
-        // getWebViewContent(context).then((file) => console.log(file));
-        loadKeywords(context.globalStoragePath).then((data) => {
+    let search = vscode.commands.registerCommand(
+        'jotit.search',
+        async function () {
+            const tags = await loadAllTags(context.globalStoragePath);
+            const title = await loadTitles(context.globalStoragePath);
+            let combined = [...tags, ...title];
+            let items = combined.map((item) => {
+                if (item.title) {
+                    return { label: item.title, description: item.tags };
+                } else {
+                    return { label: item.tag };
+                }
+            });
             let quickpick = vscode.window.createQuickPick();
-            quickpick.items = data.map((x) => ({
-                label: x.l,
-                k: x.i,
-            }));
-            quickpick.onDidChangeSelection((item) => {
+            quickpick.items = items;
+            quickpick.onDidChangeSelection(async (item) => {
                 if (item) {
                     quickpick.hide();
                     quickpick.dispose();
-                    // showItem(context.globalStoragePath, item[0]);
+                    let panel = vscode.window.createWebviewPanel(
+                        'jotit.search',
+                        'Jotit',
+                        vscode.ViewColumn.One
+                    );
+                    panel.onDidDispose(() => panel.dispose());
+                    panel.webview.html = await renderSearch(
+                        context.globalStoragePath,
+                        item[0]
+                    );
                 }
             });
             quickpick.show();
-        });
-    });
+        }
+    );
     let addnew = vscode.commands.registerCommand('jotit.add', function () {
         const formPanel = vscode.window.createWebviewPanel(
             'Notes form',
@@ -46,15 +61,16 @@ function activate(context) {
         );
         formPanel.webview.onDidReceiveMessage((msg) => {
             if (msg.type === 'form') {
-                const { keyword, imageUri, text } = msg.message;
+                const { keyword, imageUri, text, tags } = msg.message;
                 validateImage(imageUri)
                     .then((imageData) => {
                         const fileData = {
-                            keyword,
+                            title: keyword,
                             imageData,
                             text,
+                            tags: ['demo', 'demo2'],
                         };
-                        addNote(context, fileData).then(() =>
+                        addNote(context.globalStoragePath, fileData).then(() =>
                             formPanel.dispose()
                         );
                     })
@@ -63,27 +79,6 @@ function activate(context) {
                     });
             }
         });
-        // vscode.window
-        //     .showInputBox({
-        //         placeHolder: 'Related Text',
-        //         validateInput: (a) => {
-        //             if (!a) {
-        //                 return 'Required ...';
-        //             }
-        //             a = a.trim();
-        //             if (a.length === 0) {
-        //                 return 'Required ...';
-        //             }
-        //         },
-        //     })
-        //     .then((data1) => {
-        //         // console.log(data, data1);
-        //         if (!data || !data1) {
-        //             return;
-        //         }
-        // addKeyword(context.globalStoragePath, data.trim(), context);
-        //     });
-        // });
     });
 
     context.subscriptions.push(addnew);
@@ -95,47 +90,6 @@ exports.activate = activate;
 // this method is called when your extension is deactivated
 function deactivate() {}
 
-/**
- * Validates the keyword given by user and checks whether it it null or not.
- * @param {string} a
- */
-function validateK(a) {
-    if (!a) {
-        return 'Required ...';
-    }
-    a = a.trim();
-    if (a.length == 0) {
-        return 'Required ...';
-    }
-    if (a.length >= 20) {
-        return 'Cannot have more than 15 characters';
-    }
-}
-
-/**
- * It generates unique fileid from keyword and using Date.
- * @param {string} keyword
- */
-// function generateId(keyword) {
-//     return keyword.toString() + new Date().getTime().toString();
-// }
-
-function showItem(filepath, item) {
-    if (typeof item === 'undefined') {
-        return;
-    }
-    filepath = filepath.replace('undefined_publisher.jotit', '') + '\\jotit';
-    // console.log(filepath + '\\' + item.k);
-    fs.readFile(filepath + '\\' + item.k)
-        .then((data) => {
-            data = data.toString();
-            vscode.window.showInformationMessage(data, 'Show');
-        })
-        .catch((err) => {
-            if (err && err.code === 'ENOENT') {
-            }
-        });
-}
 module.exports = {
     activate,
     deactivate,
