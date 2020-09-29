@@ -14,7 +14,10 @@ const validateImage = (imageUri) => {
         fs.readFile(imageUri)
             .then((imageData) => {
                 const bitmap = Buffer.from(imageData);
-                resolve(bitmap.toString('base64'));
+                let extension = path.extname(imageUri).replace('.', '');
+                let image = `data:/${extension};base64,`;
+                image = image + bitmap.toString('base64');
+                resolve(image);
             })
             .catch((err) => {
                 console.log(err);
@@ -66,7 +69,6 @@ const loadData = (filepath, title) => {
         const dbtitle = new Database({
             filename: path.join(filepath, 'title.db'),
         });
-        console.log(title);
         dbtitle.loadDatabase((err) => {
             if (err) {
                 console.log(err);
@@ -97,17 +99,19 @@ const addNote = (uri, filedata) => {
                 dbtitle.update(
                     { title: filedata.title },
                     filedata,
-                    { upsert: true, returnUpdateDocs: true },
+                    { upsert: true, returnUpdatedDocs: true },
                     (err, numdoc, affectedDoc, upsert) => {
                         if (err) {
                             console.log(err);
                             reject();
                         } else if (affectedDoc) {
-                            updateTag(uri, affectedDoc);
-                            resolve();
+                            updateTag(uri, affectedDoc).then(() => {
+                                resolve();
+                            });
                         } else if (upsert) {
-                            updateTag(uri, upsert);
-                            resolve();
+                            updateTag(uri, upsert).then(() => {
+                                resolve();
+                            });
                         }
                     }
                 );
@@ -117,30 +121,35 @@ const addNote = (uri, filedata) => {
 };
 
 const updateTag = (filename, filedata) => {
-    const dbtag = new Database({
-        filename: path.join(filename, 'tag.db').toString(),
-    });
-    dbtag.loadDatabase((err) => {
-        if (err) {
-            console.log(err);
-        } else {
-            const tags = filedata.tags;
-            const id = filedata._id;
-            const title = filedata.title;
-            dbtag.ensureIndex({ fieldName: 'tag', unique: true });
-            tags.forEach((tag) => {
-                dbtag.update(
-                    { tag },
-                    { $addToSet: { ids: id, titles: title } },
-                    { upsert: true },
-                    (err) => {
-                        if (err) {
-                            console.log(err);
+    return new Promise((resolve, reject) => {
+        const dbtag = new Database({
+            filename: path.join(filename, 'tag.db').toString(),
+        });
+        dbtag.loadDatabase((err) => {
+            if (err) {
+                console.log(err);
+            } else {
+                const tags = filedata.tags;
+                const id = filedata._id;
+                const title = filedata.title;
+                dbtag.ensureIndex({ fieldName: 'tag', unique: true });
+                tags.forEach((tag) => {
+                    dbtag.update(
+                        { tag },
+                        { $addToSet: { ids: id, titles: title } },
+                        { upsert: true },
+                        (err) => {
+                            if (err) {
+                                console.log(err);
+                                reject();
+                            } else {
+                                resolve();
+                            }
                         }
-                    }
-                );
-            });
-        }
+                    );
+                });
+            }
+        });
     });
 };
 module.exports = {

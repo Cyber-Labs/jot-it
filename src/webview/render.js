@@ -38,7 +38,7 @@ const card = (filepath, title) => {
             let img = '';
             let tags = '';
             if (data.imageData) {
-                img = `<img src='${data.imageData}>'`;
+                img = `<img src="${data.imageData}" >`;
             }
             for (let i in data.tags) {
                 tags =
@@ -68,6 +68,7 @@ const header = () => {
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <title>JoTIt</title>
+            ${style()}
         </head>
         <body>
             <div class= 'container'>
@@ -81,6 +82,24 @@ const footer = () => {
     `;
 };
 
+const style = () => {
+    return `
+        <style>
+            .container{
+                display: flex;
+                width: 95%;
+                margin: auto;
+                margin-top: 50px;
+            }
+            .card{
+                
+            }
+            .card img{
+                position;
+            }
+        </style>
+    `;
+};
 const purge = (text) => {
     text.replace(/\>/g, '&gt;');
     text.replace(/\</g, '&lt;');
