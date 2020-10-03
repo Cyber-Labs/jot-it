@@ -19,9 +19,8 @@
                 padding: 8px;
                 height: 250px;
                 color: rgb(211, 206, 206);
-                font-size: 1rem;
-                font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman',
-                    serif;
+                font-size: 1.2rem;
+                font-family: Arial;
             }
             form {
                 display: flex;
@@ -41,11 +40,21 @@
                 font-size: 1.2rem;
                 padding: 8px;
             }
-            #imageUri {
+            #imageUri,
+            #tagInput {
                 width: 95%;
                 margin: auto;
                 background-color: var(--vscode-editor-background);
                 color: var(--vscode-editor-foreground);
+            }
+            .tag {
+                background-color: var(
+                    --vscode-editorGroupHeader-tabsBackground
+                );
+                margin: auto;
+                padding: auto;
+                font-size: 1.4rem;
+                padding: 10px;
             }
             #add-btn {
                 background-color: var(--vscode-button-background);
@@ -64,6 +73,13 @@
                 width: 95%;
                 padding: 8px;
             }
+            .tagContainer {
+                display: hidden;
+                width: 95%;
+                margin: auto;
+                align-items: right;
+                padding: auto;
+            }
         </style>
     </head>
     <body>
@@ -74,6 +90,10 @@
                 <input name="keyword" id="keyword" type="text" />
                 <label for="imageUri">Image URL</label>
                 <input name="imageUri" id="imageUri" type="text" />
+                <label for="tags">Tags</label>
+                <div id="tagContainer"></div>
+                <input type="text" name="tagInput" id="tagInput" />
+                <button onclick="addTags()" id="add-btn">Add Tag</button>
                 <label for="notes">Notes To Save</label>
                 <textarea
                     id="notes"
@@ -85,6 +105,8 @@
             </form>
         </div>
         <script>
+            var Tags = [];
+            const vscode = acquireVsCodeApi();
             function addNote() {
                 let keyword = document.getElementById('keyword').value;
                 keyword = keyword.trim();
@@ -101,9 +123,29 @@
                     keyword,
                     imageUri,
                     text,
+                    tags: Tags,
                 };
-                const vscode = acquireVsCodeApi();
                 vscode.postMessage({ type: 'form', message: message });
+            }
+            function addTags() {
+                let tagContainer = document.getElementById('tagContainer');
+                let tag = document.createElement('span');
+                tag.innerText = document
+                    .getElementById('tagInput')
+                    .value.trim();
+                if (tag.innerText === '') {
+                    document.getElementById('error').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('error').style.display = 'none';
+                    }, 2000);
+                    return;
+                }
+                tag.classList.add('tag');
+                Tags.push(tag.innerText);
+                tagContainer.appendChild(tag);
+                console.log(tagContainer.children);
+                tagContainer.style.display = 'flex';
+                document.getElementById('tagInput').value = '';
             }
         </script>
     </body>

@@ -4,6 +4,8 @@ const {
     addNote,
     loadTitles,
     loadAllTags,
+    loadTitlesFromTag,
+    deleteNote,
 } = require('./FileUtils');
 const { getWebViewContent, renderSearch } = require('./webview/render');
 
@@ -30,19 +32,69 @@ function activate(context) {
             let quickpick = vscode.window.createQuickPick();
             quickpick.items = items;
             quickpick.onDidChangeSelection(async (item) => {
-                if (item) {
+                if (item && !item[0].description) {
+                    loadTitlesFromTag(
+                        context.globalStoragePath,
+                        item[0].label
+                    ).then((data) => {
+                        let quickpick2 = vscode.window.createQuickPick();
+                        quickpick2.items = data.map((el) => {
+                            return { label: el };
+                        });
+                        quickpick2.show();
+                        quickpick2.onDidChangeSelection(async (item) => {
+                            console.log(item);
+                            if (item) {
+                                quickpick2.hide();
+                                quickpick2.dispose();
+                                let panel = vscode.window.createWebviewPanel(
+                                    'jotit.search',
+                                    'Jotit',
+                                    vscode.ViewColumn.One,
+                                    { enableScripts: true }
+                                );
+                                panel.onDidDispose(() => panel.dispose());
+                                panel.webview.html = await renderSearch(
+                                    context.globalStoragePath,
+                                    item[0]
+                                );
+                                panel.webview.onDidReceiveMessage((msg) => {
+                                    if (msg.type == 'delete') {
+                                        panel.dispose();
+                                    }
+                                });
+                            }
+                        });
+                    });
+                } else if (item) {
                     quickpick.hide();
                     quickpick.dispose();
                     let panel = vscode.window.createWebviewPanel(
                         'jotit.search',
                         'Jotit',
-                        vscode.ViewColumn.One
+                        vscode.ViewColumn.One,
+                        { enableScripts: true }
                     );
                     panel.onDidDispose(() => panel.dispose());
                     panel.webview.html = await renderSearch(
                         context.globalStoragePath,
                         item[0]
                     );
+                    panel.webview.onDidReceiveMessage((msg) => {
+                        if (msg.type == 'delete') {
+                            panel.dispose();
+                            deleteNote(
+                                context.globalStoragePath,
+                                msg.message.title
+                            )
+                                .then(() => {
+                                    console.log('Deleted');
+                                })
+                                .catch((err) => {
+                                    console.log(err);
+                                });
+                        }
+                    });
                 }
             });
             quickpick.show();
@@ -68,11 +120,13 @@ function activate(context) {
                             title: keyword,
                             imageData,
                             text,
-                            tags: ['demo', 'demo2'],
+                            tags,
                         };
-                        addNote(context.globalStoragePath, fileData).then(() =>
-                            formPanel.dispose()
-                        );
+                        addNote(context.globalStoragePath, fileData)
+                            .then(() => formPanel.dispose())
+                            .catch((err) => {
+                                console.log(err);
+                            });
                     })
                     .catch((err) => {
                         console.log(err);
