@@ -5,6 +5,10 @@ It is a VSCode extension which enables user to store important screenshots and t
 ## Features
 
 -   Easily save your notes.
+-   Attach local image file easily with your notes.
+-   Two commands are provided in the command pallete `(Ctrl + Shift + P)`
+    -   Find your saved notes.
+    -   Add new text note.
 
 ## How to run it in development mode?
 
