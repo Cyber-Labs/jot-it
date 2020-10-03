@@ -1,15 +1,17 @@
 # JotIt
 
-It is an extension which enables user to store important screenshots and text, and enables a fast lookup into them.
+It is a VSCode extension which enables user to store important screenshots and text, and enables a fast lookup into them.
 
 ## Features
 
-## Requirements
+-   Easily save your notes.
+-   Attach local image file easily with your notes.
+-   Two commands are provided in the command pallete `(Ctrl + Shift + P)`
+    -   Find your saved notes.
+    -   Add new text note.
 
-## Extension Settings
+## How to run it in development mode?
 
-## Known Issues
-
-## Release Notes
-
-**Enjoy!**
+-   To run it first you need to clone it from github in to your local.
+-   Then after opening the jotit repository the extension can be run in debug mode of VS code
+-   For that press F5 button. From the drop down choose VS code Extension Environment (preview). Another debugging window for VS code extension will open up.
