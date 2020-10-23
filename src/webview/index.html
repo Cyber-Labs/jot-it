@@ -33,7 +33,7 @@
             #keyword {
                 width: 95%;
                 margin: auto;
-                background-color: var(--vscode-editor-background);
+                background-color: var(--vscode-input-background);
                 color: var(--vscode-editor-foreground);
             }
             input {
@@ -41,13 +41,23 @@
                 padding: 8px;
             }
             #imageUri,
-            #tagInput {
+            #tagInput,
+            #linkInput {
                 width: 95%;
                 margin: auto;
-                background-color: var(--vscode-editor-background);
+                background-color: var(--vscode-input-background);
                 color: var(--vscode-editor-foreground);
             }
             .tag {
+                background-color: var(
+                    --vscode-editorGroupHeader-tabsBackground
+                );
+                margin: auto;
+                padding: auto;
+                font-size: 1.4rem;
+                padding: 10px;
+            }
+            .link {
                 background-color: var(
                     --vscode-editorGroupHeader-tabsBackground
                 );
@@ -80,20 +90,52 @@
                 align-items: right;
                 padding: auto;
             }
+            #browse{
+                padding: 10px;
+                margin: 20px 10px;
+                width: 100px;
+                background: var(--vscode-button-background);
+                border:1px solid var(--vscode-button-border);
+                position:relative;
+                color: var(--vscode-button-foreground);
+                border-radius:2px;
+                text-align:center;
+                float:left;
+                cursor:pointer
+            }
+            .hide_file {
+                position: absolute;
+                opacity: 0;
+                z-index: 1000;
+                cursor: pointer;
+                right: 0;
+                top: 0;
+                height: 100%;
+                font-size: 24px;
+                width: 100%;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <div id="error" style="display: none">Keyword Cannot Be Null</div>
+            <div id="error" style="display: none"></div>
             <form>
                 <label for="keyword">Keyword</label>
                 <input name="keyword" id="keyword" type="text" />
-                <label for="imageUri">Image URL</label>
+                <label for="imageUri">Image URL(Optional)</label>
                 <input name="imageUri" id="imageUri" type="text" />
+                <div id = "browse">
+                    Browse
+                    <input type='file' id="imageChoosen" class="hide_file">
+                </div>
                 <label for="tags">Tags</label>
                 <div id="tagContainer"></div>
                 <input type="text" name="tagInput" id="tagInput" />
                 <button onclick="addTags()" id="add-btn">Add Tag</button>
+                <label for="links">Related Links(Optional)</label>
+                <div id="linkContainer"></div>
+                <input type="text" name="linkInput" id="linkInput" />
+                <button onclick="addLinks()" id="add-btn">Add Links</button>
                 <label for="notes">Notes To Save</label>
                 <textarea
                     id="notes"
@@ -106,26 +148,42 @@
         </div>
         <script>
             var Tags = [];
+            var Links = [];
             const vscode = acquireVsCodeApi();
+            function setErrorMessage(msg){
+                if(msg==='')return;
+                let errorDiv = document.getElementById('error');
+                errorDiv.innerText = msg;
+                errorDiv.style.display = 'block';
+                errorDiv.scrollIntoView();
+                setTimeout(() => {
+                        document.getElementById('error').style.display = 'none';
+                }, 2000);
+            }
             function addNote() {
                 let keyword = document.getElementById('keyword').value;
                 keyword = keyword.trim();
                 if (keyword === '') {
-                    document.getElementById('error').style.display = 'block';
-                    setTimeout(() => {
-                        document.getElementById('error').style.display = 'none';
-                    }, 2000);
+                    setErrorMessage('Keyword is required!');
                     return;
                 }
                 const imageUri = document.getElementById('imageUri').value;
                 let text = document.getElementById('notes').value;
+                if(Tags.length ===0){
+                    setErrorMessage('Atleast One Tag is required');
+                    return;
+                }
                 let message = {
                     keyword,
                     imageUri,
                     text,
                     tags: Tags,
+                    links: Links
                 };
                 vscode.postMessage({ type: 'form', message: message });
+            }
+            document.getElementById('imageChoosen').onchange = (e)=>{
+                console.log(document.getElementById('imageChoosen').files[0].name, JSON.stringify(e));
             }
             function addTags() {
                 let tagContainer = document.getElementById('tagContainer');
@@ -134,18 +192,31 @@
                     .getElementById('tagInput')
                     .value.trim();
                 if (tag.innerText === '') {
-                    document.getElementById('error').style.display = 'block';
-                    setTimeout(() => {
-                        document.getElementById('error').style.display = 'none';
-                    }, 2000);
+                    setErrorMessage('Tag is not specified!');
                     return;
                 }
                 tag.classList.add('tag');
                 Tags.push(tag.innerText);
                 tagContainer.appendChild(tag);
-                console.log(tagContainer.children);
                 tagContainer.style.display = 'flex';
                 document.getElementById('tagInput').value = '';
+            }
+            function addLinks() {
+                let linkContainer = document.getElementById('linkContainer');
+                let link = document.createElement('a');
+                let linksrc = document.getElementById('linkInput').value.trim();
+                if(linksrc ===''){
+                    setErrorMessage('Link is not specified');
+                    return;
+                }
+                link.setAttribute('href', linksrc);
+                link.innerText = linksrc;
+                link.classList.add('link');
+                Links.push(linksrc);
+                linkContainer.appendChild(link);
+                linkContainer.style.display = 'flex';
+                linkContainer.style.flexDirection = 'column';
+                document.getElementById('linkInput').value = '';
             }
         </script>
     </body>

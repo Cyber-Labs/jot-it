@@ -113,7 +113,7 @@ function activate(context) {
         );
         formPanel.webview.onDidReceiveMessage((msg) => {
             if (msg.type === 'form') {
-                const { keyword, imageUri, text, tags } = msg.message;
+                const { keyword, imageUri, text, tags, links } = msg.message;
                 validateImage(imageUri)
                     .then((imageData) => {
                         const fileData = {
@@ -121,6 +121,7 @@ function activate(context) {
                             imageData,
                             text,
                             tags,
+                            links,
                         };
                         addNote(context.globalStoragePath, fileData)
                             .then(() => formPanel.dispose())

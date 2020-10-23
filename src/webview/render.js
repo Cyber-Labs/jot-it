@@ -1,5 +1,6 @@
 const vscode = require('vscode');
 const fs = require('fs').promises;
+const path = require('path');
 const { loadData, loadImage } = require('../FileUtils');
 
 const getWebViewContent = (context, name, data) => {
@@ -13,13 +14,12 @@ const getWebViewContent = (context, name, data) => {
 const renderForm = (context) => {
     return new Promise((resolve) => {
         fs.readFile(
-            vscode.Uri.joinPath(
-                context.extensionUri,
-                'src',
-                'webview',
-                'index.html'
-            ).path.replace(/^\//, '')
-        ).then((htmlFile) => resolve(htmlFile.toString()));
+            path.join(context.extensionPath, 'src', 'webview', 'index.html')
+        )
+            .then((htmlFile) => resolve(htmlFile.toString()))
+            .catch((err) => {
+                console.log(err);
+            });
     });
 };
 
@@ -37,6 +37,7 @@ const card = (filepath, title) => {
         loadData(filepath, title).then(async (data) => {
             let img = '';
             let tags = '';
+            console.log(data.imageData);
             if (data.imageData) {
                 let imageContent = await loadImage(filepath, data.imageData);
                 img = `<img src="${imageContent}" >`;
@@ -45,13 +46,23 @@ const card = (filepath, title) => {
                 tags =
                     tags + `<span class ="tag">${purge(data.tags[i])}</span>`;
             }
+            let links = '';
+            for (let i in data.links) {
+                links =
+                    links +
+                    `🔗<a href="${data.links[i]}" class ="links">${data.links[i]}</a><br>`;
+            }
             let html = `
             <div class="card">
             ${img}
             <div class = "text">
             <h1 id= "title">${title}</h1>
+            <div style="display: flex">
             ${tags}
             <button onclick= "deleteIt()" id="delete">Delete</button>
+            </div>
+            <br>
+            <div id = "linkContainer">${links}</div>
                     <div class="notes">
                         ${purge(data.text)}
                     </div>
@@ -119,12 +130,15 @@ const style = () => {
             .tag{
                 margin: 20px;
                 padding: 5px;
-                background: #4b4c4d;
+            }
+            .tag {
+                background: var(--vscode-input-background);
             }
             #delete{
                 float: right;
                 width: 100px;
                 height: 35px;
+                margin: 20px;
                 background: var(--vscode-button-background);
                 color: var(--vscode-button-foreground);
                 border: none;
@@ -133,6 +147,9 @@ const style = () => {
                 margin: 8px;
                 margin-bottom: 15px;
                 font-size: 3rem;
+            }
+            #linkContainer{
+                margin-top: 15px;
             }
         </style>
     `;
