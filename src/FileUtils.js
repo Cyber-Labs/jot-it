@@ -1,6 +1,5 @@
 const fs = require('fs').promises;
 const Database = require('nedb');
-const { resolve } = require('path');
 const path = require('path');
 const uuid = require('uuid').v1;
 
@@ -120,7 +119,8 @@ const addNote = (uri, filedata) => {
             } else {
                 dbtitle.ensureIndex({ fieldName: 'title', unique: true });
                 let imageData = filedata.imageData;
-                let imageFileName = uuid();
+                let imageFileName = '';
+                if (imageData) imageFileName = uuid();
                 filedata.imageData = imageFileName;
                 dbtitle.update(
                     { title: filedata.title },
@@ -155,6 +155,9 @@ const addNote = (uri, filedata) => {
 };
 const deleteImage = (uri, imageFileName) => {
     return new Promise((resolve, reject) => {
+        if (imageFileName === '') {
+            return resolve();
+        }
         fs.unlink(path.join(uri, imageFileName))
             .then(() => {
                 resolve();
@@ -212,6 +215,9 @@ const deleteNote = (uri, title) => {
 };
 const saveImage = (uri, imageData, imageFileName) => {
     return new Promise((resolve, reject) => {
+        if (imageFileName === '') {
+            return resolve();
+        }
         fs.writeFile(path.join(uri, imageFileName), imageData)
             .then(() => resolve())
             .catch(() => reject());
