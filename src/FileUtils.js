@@ -1,6 +1,5 @@
 const fs = require('fs').promises;
 const Database = require('nedb');
-const { resolve } = require('path');
 const path = require('path');
 const uuid = require('uuid').v1;
 
