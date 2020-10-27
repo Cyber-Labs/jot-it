@@ -113,25 +113,53 @@ function activate(context) {
         );
         formPanel.webview.onDidReceiveMessage((msg) => {
             if (msg.type === 'form') {
-                const { keyword, imageUri, text, tags, links } = msg.message;
-                validateImage(imageUri)
-                    .then((imageData) => {
-                        const fileData = {
-                            title: keyword,
-                            imageData,
-                            text,
-                            tags,
-                            links,
-                        };
-                        addNote(context.globalStoragePath, fileData)
-                            .then(() => formPanel.dispose())
-                            .catch((err) => {
-                                console.log(err);
+                const {
+                    keyword,
+                    imageUri,
+                    text,
+                    tags,
+                    links,
+                    imageData,
+                } = msg.message;
+                if (imageData === undefined)
+                    validateImage(imageUri)
+                        .then((imageData) => {
+                            const fileData = {
+                                title: keyword,
+                                imageData,
+                                text,
+                                tags,
+                                links,
+                            };
+                            addNote(context.globalStoragePath, fileData)
+                                .then(() => formPanel.dispose())
+                                .catch((err) => {
+                                    console.log(err);
+                                });
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                            formPanel.webview.postMessage({
+                                error: {
+                                    type: 'imgURL',
+                                    msg: 'Cannot Find Given Image!',
+                                },
                             });
-                    })
-                    .catch((err) => {
-                        console.log(err);
-                    });
+                        });
+                else {
+                    const fileData = {
+                        title: keyword,
+                        imageData,
+                        text,
+                        tags,
+                        links,
+                    };
+                    addNote(context.globalStoragePath, fileData)
+                        .then(() => formPanel.dispose())
+                        .catch((err) => {
+                            console.log(err);
+                        });
+                }
             }
         });
     });

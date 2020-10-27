@@ -75,7 +75,8 @@
                 color: var(--vscode-editor-foreground);
             }
             #error {
-                background: rgb(236, 4, 4);
+                background: rgb(191, 115, 115);
+                border: solid red 1px;
                 color: white;
                 margin: 12px auto;
                 font-size: 1rem;
@@ -96,7 +97,7 @@
                 width: 100px;
                 background: var(--vscode-button-background);
                 border:1px solid var(--vscode-button-border);
-                position:relative;
+                position : relative;
                 color: var(--vscode-button-foreground);
                 border-radius:2px;
                 text-align:center;
@@ -114,27 +115,37 @@
                 font-size: 24px;
                 width: 100%;
             }
+            #imagePreview{
+                display: none;
+                height: 0;
+                width: 0;
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div id="error" style="display: none"></div>
             <form>
-                <label for="keyword">Keyword</label>
-                <input name="keyword" id="keyword" type="text" />
+                <label for="keyword">Title</label>
+                <input name="keyword" id="keyword" type="text" placeholder="Enter Title"/>
                 <label for="imageUri">Image URL(Optional)</label>
-                <input name="imageUri" id="imageUri" type="text" />
-                <div id = "browse">
-                    Browse
-                    <input type='file' id="imageChoosen" class="hide_file">
+                <input name="imageUri" id="imageUri" type="text" placeholder="Enter url or Paste in Data URL Base 64"/>
+                <div class="imagebtn" style="display: flex;flex-direction: row;">
+                    <div id = "browse">
+                        Browse
+                        <input type='file' id="imageChoosen" class="hide_file">
+                    </div>
+                    <button onclick = "getImageFromClip()" id="add-btn" style= "width: 150px; position: relative;">Paste From Clipboard</button>
+                    <button onclick = "getImage()" id="add-btn" style= "width: 150px; position: relative;">Get From Link</button>
+                    <img src="" id = "imagePreview">
                 </div>
                 <label for="tags">Tags</label>
                 <div id="tagContainer"></div>
-                <input type="text" name="tagInput" id="tagInput" />
+                <input type="text" name="tagInput" id="tagInput" placeholder="Enter Tags"/>
                 <button onclick="addTags()" id="add-btn">Add Tag</button>
                 <label for="links">Related Links(Optional)</label>
                 <div id="linkContainer"></div>
-                <input type="text" name="linkInput" id="linkInput" />
+                <input type="text" name="linkInput" id="linkInput" placeholder="Enter Links"/>
                 <button onclick="addLinks()" id="add-btn">Add Links</button>
                 <label for="notes">Notes To Save</label>
                 <textarea
@@ -149,13 +160,14 @@
         <script>
             var Tags = [];
             var Links = [];
+            var imageData;
             const vscode = acquireVsCodeApi();
             function setErrorMessage(msg){
-                if(msg==='')return;
+                if(msg === undefined || msg==='')return;
                 let errorDiv = document.getElementById('error');
                 errorDiv.innerText = msg;
                 errorDiv.style.display = 'block';
-                errorDiv.scrollIntoView();
+                document.documentElement.scrollTop = 0;
                 setTimeout(() => {
                         document.getElementById('error').style.display = 'none';
                 }, 2000);
@@ -176,6 +188,7 @@
                 let message = {
                     keyword,
                     imageUri,
+                    imageData: imageData,
                     text,
                     tags: Tags,
                     links: Links
@@ -183,7 +196,18 @@
                 vscode.postMessage({ type: 'form', message: message });
             }
             document.getElementById('imageChoosen').onchange = (e)=>{
-                console.log(document.getElementById('imageChoosen').files[0].name, JSON.stringify(e));
+                const file= document.getElementById('imageChoosen').files[0];
+                if((/\.(jpe?g|png|gif)$/i.test(file.name))){
+                    const reader =new FileReader();
+                    reader.addEventListener("load", ()=>{
+                        document.getElementById('imageUri').value = "";
+                        imageData = reader.result;
+                        setImage();
+                    }, false);
+                    if(file){
+                        reader.readAsDataURL(file);
+                    }
+                }
             }
             function addTags() {
                 let tagContainer = document.getElementById('tagContainer');
@@ -201,6 +225,13 @@
                 tagContainer.style.display = 'flex';
                 document.getElementById('tagInput').value = '';
             }
+            window.addEventListener('message', (e)=>{
+                let msg = e.data;
+                console.log(JSON.stringify(msg));
+                if(msg.error && msg.error.type === "imgURL"){
+                    setErrorMessage(msg.error.msg);
+                }
+            });
             function addLinks() {
                 let linkContainer = document.getElementById('linkContainer');
                 let link = document.createElement('a');
@@ -217,6 +248,56 @@
                 linkContainer.style.display = 'flex';
                 linkContainer.style.flexDirection = 'column';
                 document.getElementById('linkInput').value = '';
+            }
+            async function getImageFromClip(){
+                let clip = document.getElementById('imageUri').value;
+                function isDataURL(s) {
+                    const regex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
+                    return !!s.match(regex);
+                }
+                if(isDataURL(clip)){
+                    imageData = clip;
+                    setImage();
+                }else {
+                    setErrorMessage("Clipboard does not contains Base64 encoded image.");
+                }
+            }
+            function getImage(){
+                const url = document.getElementById('imageUri').value;
+                if(url==="" || !isValidUrl(url)){
+                    setErrorMessage("No url specified!");
+                    return ;
+                }
+                fetch(url).then((res)=>res.blob()).then((data)=>{
+                        const reader = new FileReader();
+                        reader.readAsDataURL(data);
+                        reader.onloadend = ()=>{
+                            imageData = reader.result;
+                            setImage();
+                        }
+                }).catch((err)=>{
+                    console.log(err);
+                    setErrorMessage("Cannot fetch image from the given URL!");
+                });
+            }
+            function isValidUrl(url){
+                let url_;
+                try {
+                    url_ = new URL(url);
+                } catch (_) {
+                    return false;  
+                }
+                return url_.protocol === "https:";
+            }
+            function setImage(){
+                if(imageData){
+                    const imgTag = document.getElementById('imagePreview');
+                    imgTag.style.borderRadius = "50%";
+                    imgTag.style.display = "inline";
+                    imgTag.style.height = "80px";
+                    imgTag.style.width = "80px";
+                    imgTag.src = imageData;
+                }
             }
         </script>
     </body>
