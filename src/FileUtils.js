@@ -21,8 +21,7 @@ const validateImage = (imageUri) => {
                 resolve(image);
             })
             .catch((err) => {
-                console.log(err);
-                reject();
+                reject(err);
             });
     });
 };
