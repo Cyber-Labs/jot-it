@@ -21,7 +21,7 @@ function activate(context) {
         async function () {
             const tags = await loadAllTags(context.globalStoragePath);
             const title = await loadTitles(context.globalStoragePath);
-            let combined = [...tags, ...title];
+            let combined = [...title, ...tags];
             let items = combined.map((item) => {
                 if (item.title) {
                     return { label: item.title, description: item.tags };
@@ -37,13 +37,14 @@ function activate(context) {
                         context.globalStoragePath,
                         item[0].label
                     ).then((data) => {
+                        quickpick.hide();
+                        quickpick.dispose();
                         let quickpick2 = vscode.window.createQuickPick();
                         quickpick2.items = data.map((el) => {
                             return { label: el };
                         });
                         quickpick2.show();
                         quickpick2.onDidChangeSelection(async (item) => {
-                            console.log(item);
                             if (item) {
                                 quickpick2.hide();
                                 quickpick2.dispose();
@@ -61,6 +62,16 @@ function activate(context) {
                                 panel.webview.onDidReceiveMessage((msg) => {
                                     if (msg.type == 'delete') {
                                         panel.dispose();
+                                        deleteNote(
+                                            context.globalStoragePath,
+                                            msg.message.title
+                                        )
+                                            .then(() => {
+                                                console.log('Deleted');
+                                            })
+                                            .catch((err) => {
+                                                console.log(err);
+                                            });
                                     }
                                 });
                             }
