@@ -240,6 +240,10 @@
                     setErrorMessage('Link is not specified');
                     return;
                 }
+                if(!isValidUrl(linksrc)){
+                    setErrorMessage('Link url is not correct (Should be https scheme)');
+                    return;
+                }
                 link.setAttribute('href', linksrc);
                 link.innerText = linksrc;
                 link.classList.add('link');
@@ -249,12 +253,12 @@
                 linkContainer.style.flexDirection = 'column';
                 document.getElementById('linkInput').value = '';
             }
+            function isDataURL(s) {
+                const regex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
+                return !!s.match(regex);
+            }
             async function getImageFromClip(){
                 let clip = document.getElementById('imageUri').value;
-                function isDataURL(s) {
-                    const regex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
-                    return !!s.match(regex);
-                }
                 if(isDataURL(clip)){
                     imageData = clip;
                     setImage();

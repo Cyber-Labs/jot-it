@@ -192,8 +192,13 @@ const deleteNote = (uri, title) => {
                                         {
                                             $pull: {
                                                 titles: title,
-                                                ids: docs[0].id,
+                                                ids: docs[0]._id,
                                             },
+                                        },
+                                        () => {
+                                            dbtag.remove({
+                                                titles: { $size: 0 },
+                                            });
                                         }
                                     );
                                 });
