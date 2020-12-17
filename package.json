@@ -6,6 +6,7 @@
     "engines": {
         "vscode": "^1.47.0"
     },
+    "publisher": "hritikraj",
     "categories": [
         "Other"
     ],
@@ -25,6 +26,10 @@
                 "title": "Add new text note."
             }
         ]
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Cyber-Labs/jot-it"
     },
     "scripts": {
         "lint": "eslint .",
