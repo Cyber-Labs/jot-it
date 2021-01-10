@@ -7,6 +7,7 @@
         "vscode": "^1.47.0"
     },
     "publisher": "hritikraj",
+    "icon":"jotit-icon.png",
     "categories": [
         "Other"
     ],

@@ -1,6 +1,15 @@
 # JotIt
 
-It is a VSCode extension which enables user to store important screenshots and text, and enables a fast lookup into them.
+<table style="width: 100%; border-style: none;"><tr>
+<td style="width: 140px; text-align: center;"><a href="https://marketplace.visualstudio.com/items?itemName=hritikraj.jotit"><img width="128px" src="jotit-icon.png" alt="Visual Studio Extension -JotIt logo"/></a></td>
+<td>
+<strong>Visual Studio Extension - JotIt</strong><br />
+<i>Now manage your notes with ease.<br />
+<strong><a href="https://marketplace.visualstudio.com/items?itemName=hritikraj.jotit">Check It Out!</a></strong></i>
+</td>
+</tr></table>
+
+It is a VSCode extension which enables user to store important screenshots and text, and enables a fast lookup into them. You can download the extension from [Visual Studio MarketPlace.](https://marketplace.visualstudio.com/items?itemName=hritikraj.jotit)
 
 ## Features
 
