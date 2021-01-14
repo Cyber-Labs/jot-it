@@ -7,7 +7,7 @@
         "vscode": "^1.47.0"
     },
     "publisher": "hritikraj",
-    "icon":"jotit-icon.png",
+    "icon": "jotit-icon.png",
     "categories": [
         "Other"
     ],
@@ -15,7 +15,7 @@
         "onCommand:jotit.search",
         "onCommand:jotit.add"
     ],
-    "main": "./src/extension.js",
+    "main": "./dist/extension.js",
     "contributes": {
         "commands": [
             {
@@ -35,7 +35,9 @@
     "scripts": {
         "lint": "eslint .",
         "pretest": "npm run lint",
-        "test": "node ./test/runTest.js"
+        "test": "node ./test/runTest.js",
+        "build": "webpack --mode production",
+        "vscode:prepublish": "npm run build"
     },
     "prettier": {
         "trailingComma": "es5",
@@ -44,15 +46,17 @@
         "singleQuote": true
     },
     "devDependencies": {
-        "@types/vscode": "^1.47.0",
         "@types/glob": "^7.1.1",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
+        "@types/vscode": "^1.47.0",
         "eslint": "^6.8.0",
         "glob": "^7.1.6",
         "mocha": "^7.1.2",
         "typescript": "^3.8.3",
-        "vscode-test": "^1.3.0"
+        "vscode-test": "^1.3.0",
+        "webpack": "^5.14.0",
+        "webpack-cli": "^4.3.1"
     },
     "dependencies": {
         "nedb": "^1.8.0",
